@@ -20,7 +20,7 @@ class CustomEncoder(json.JSONEncoder):
 
 
 def connect_db(database):
-    with open('env.json', 'r') as f:
+    with open('json/env.json', 'r') as f:
         env = json.load(fp=f)
 
     return pymysql.connect(host=env['host'],
@@ -81,7 +81,7 @@ def save_app_info(appinfo, path):
 
 def save_3rd_data(appinfo, path, test=False):
     # 获取三方数据配置
-    with open('data.json', 'r') as f:
+    with open('json/data.json', 'r') as f:
         datasoucre_dict = json.load(fp=f)
 
     # 查询第三方数据
