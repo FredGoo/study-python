@@ -76,7 +76,7 @@ def save_app_info(appinfo, path):
 
     # 写入基础数据
     with open(path + '/appinfo.json', 'w') as f:
-        json.dump(appinfo, f, cls=CustomEncoder)
+        json.dump(appinfo, f, cls=CustomEncoder, ensure_ascii=False)
 
 
 def save_3rd_data(appinfo, path, test=False):
