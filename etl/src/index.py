@@ -59,7 +59,7 @@ def query_3rd_data(table, field, field_value):
 
 
 def create_app_folder(appid):
-    path = os.getcwd()[:-4] + '/out/' + appid
+    path = os.getcwd()[:-4] + '/out/raw/' + appid
 
     # 创建文件夹
     folder_exists = os.path.exists(path)

@@ -5,7 +5,7 @@ import os
 import re
 
 
-def encode_mbl_idno_item(root, file, hl):
+def encode_mbl_idno_item(root, root_ec, file, hl):
     infile = open(root + '/' + file, "r", encoding="utf-8").read()
     new_infile = infile
 
@@ -36,18 +36,25 @@ def encode_mbl_idno_item(root, file, hl):
     print(new_infile)
 
     # 保存加密后的数据
-    outfile = open(root + '/' + file, "w", encoding="utf-8")
+    outfile = open(root_ec + '/' + file, "w", encoding="utf-8")
     outfile.write(str(new_infile))
     outfile.close()
 
 
 def encode_mbl_idno():
-    rootdir = os.getcwd()[:-4] + '/out'
+    rootdir = os.getcwd()[:-4] + '/out/raw'
     hl = hashlib.md5()
 
     for root, dirs, files in os.walk(rootdir):
+        root_ec = root.replace("raw", "encryption")
+
+        if len(files) > 0:
+            folder_exists = os.path.exists(root_ec)
+            if not folder_exists:
+                os.makedirs(root_ec)
+
         for file in files:
-            encode_mbl_idno_item(root, file, hl)
+            encode_mbl_idno_item(root, root_ec, file, hl)
 
 
 if __name__ == '__main__':
