@@ -161,4 +161,4 @@ if __name__ == '__main__':
         'missing_app': diff_list
     }
 
-    save_record(21, '内部数据源监控', '短信异常监控', json.dumps(content), status, 'H', start)
+    save_record(22, '内部数据源监控', '短信异常监控', json.dumps(content), status, 'H', start)
