@@ -1,4 +1,4 @@
-# encoding:utf-8
+# -*- coding: utf-8 -*-
 
 import datetime
 import decimal
@@ -33,6 +33,19 @@ def connect_db(database):
 
 def query_biz_app(appid):
     sql_str = "SELECT * FROM gravity.BIZ_APP_COMMON where C_APP_ID = '%s'" % (appid)
+
+    con = connect_db('gravity')
+    cur = con.cursor(cursor=pymysql.cursors.DictCursor)
+    cur.execute(sql_str)
+    rows = cur.fetchall()
+    cur.close()
+    con.close()
+
+    return rows
+
+
+def query_biz_ext_app(appid):
+    sql_str = "SELECT * FROM gravity.BIZ_APP01 where C_APP_ID = '%s'" % (appid)
 
     con = connect_db('gravity')
     cur = con.cursor(cursor=pymysql.cursors.DictCursor)
