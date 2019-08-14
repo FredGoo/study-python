@@ -28,7 +28,10 @@ def get_data(app_id_list):
         id_list_str = "'" + "','".join(id_list) + "'"
 
         # 基础信息
-        sql_str = "SELECT * FROM BIZ_APP_COMMON where C_APP_ID in (%s)" % (id_list_str)
+        sql_str = "SELECT C_APP_ID,C_GENDER,C_MARITAL,C_EDUCATION,C_CITY_CODE,N_REVISION,N_LOAN_PURPOSE,N_AMT_APPLIED,N_TENOR_APPLIED,N_CUST_ID,N_ID_TYPE,N_AGE,C_MBL_TEL,C_CAMP_CODE,C_GEO_LONG,C_GEO_LATI,C_RELATION, C_RELATION2, C_CARD_RSV_MB  \
+            FROM BIZ_APP_COMMON \
+            where C_GEO_LONG <> '' and  C_GEO_LATI <> '' and C_RELATION2 <> '' and C_APP_ID in (%s)" % (
+            id_list_str)
         con = connect_db('datacenter')
         cur = con.cursor(cursor=pymysql.cursors.DictCursor)
         cur.execute(sql_str)
@@ -36,9 +39,11 @@ def get_data(app_id_list):
         cur.close()
         con.close()
         for row in rows:
+            appid = row['C_APP_ID']
             if not app_main.__contains__(row['C_APP_ID']):
-                app_main[row['C_APP_ID']] = {}
-            app_main[row['C_APP_ID']]['common'] = row
+                app_main[appid] = {}
+            del row['C_APP_ID']
+            app_main[appid]['common'] = row
 
         # 01信息
         sql_str = "SELECT * FROM BIZ_APP01 where C_APP_ID in (%s)" % (id_list_str)
@@ -49,7 +54,9 @@ def get_data(app_id_list):
         cur.close()
         con.close()
         for row in rows:
-            app_main[row['C_APP_ID']]['01'] = row
+            if app_main.__contains__(row['C_APP_ID']):
+                # app_main[row['C_APP_ID']]['01'] = row
+                app_main[row['C_APP_ID']]['01'] = {}
 
     return app_main
 
@@ -60,8 +67,8 @@ def save_data(app_data, app_definition):
     for key in app_data:
         common_keys = list(app_data[key]['common'].keys())
         ext_keys = list(app_data[key]['01'].keys())
-        del ext_keys[0]
-        del ext_keys[0]
+        # del ext_keys[0]
+        # del ext_keys[0]
         header = common_keys + ext_keys
         break
     result_header = ['result']

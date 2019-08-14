@@ -1,0 +1,110 @@
+[
+  {
+    "name": "fpp",
+    "table": "T_FACE_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-190604-257430"
+  },
+  {
+    "name": "tx",
+    "table": "T_TIANXING_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-181204-200610"
+  },
+  {
+    "name": "pa",
+    "table": "T_PA_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-181119-563886"
+  },
+  {
+    "name": "td",
+    "table": "T_TD_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-181204-200610"
+  },
+  {
+    "name": "mx",
+    "table": "T_MX_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-181016-632730"
+  },
+  {
+    "name": "ja",
+    "table": "T_GEO_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-181204-200610"
+  },
+  {
+    "name": "tx",
+    "table": "T_TX_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-181204-200610"
+  },
+  {
+    "name": "br",
+    "table": "T_BR_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_MBL_TEL",
+    "data_field": "RAW_DATA",
+    "data_id": "API_CODE",
+    "test_value": "15960891828"
+  },
+  {
+    "name": "cy",
+    "table": "T_ZDCY_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-190409-385049"
+  },
+  {
+    "name": "xy",
+    "table": "T_XY_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-181127-914634"
+  },
+  {
+    "name": "zq",
+    "table": "T_ZQ_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-190416-774821"
+  },
+  {
+    "name": "fi",
+    "table": "T_FICO_REQ_DATA",
+    "search_field": "APP_ID",
+    "info_field": "C_APP_ID",
+    "data_field": "RAW_DATA",
+    "data_id": "ID",
+    "test_value": "NYB01-190702-756663"
+  }
+]

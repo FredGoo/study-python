@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-
 import datetime
 import decimal
 import json
 import os
 
 import pymysql
+
+from src.database import connect_db
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -19,22 +20,10 @@ class CustomEncoder(json.JSONEncoder):
         return super(CustomEncoder, self).default(obj)
 
 
-def connect_db(database):
-    with open('json/env.json', 'r') as f:
-        env = json.load(fp=f)
-
-    return pymysql.connect(host=env['host'],
-                           port=env['port'],
-                           user=env['user'],
-                           password=env['password'],
-                           database=database,
-                           charset='utf8')
-
-
 def query_biz_app(appid):
-    sql_str = "SELECT * FROM gravity.BIZ_APP_COMMON where C_APP_ID = '%s'" % (appid)
+    sql_str = "SELECT * FROM BIZ_APP_COMMON where C_APP_ID = '%s'" % (appid)
 
-    con = connect_db('gravity')
+    con = connect_db()
     cur = con.cursor(cursor=pymysql.cursors.DictCursor)
     cur.execute(sql_str)
     rows = cur.fetchall()
@@ -45,9 +34,9 @@ def query_biz_app(appid):
 
 
 def query_biz_ext_app(appid):
-    sql_str = "SELECT * FROM gravity.BIZ_APP01 where C_APP_ID = '%s'" % (appid)
+    sql_str = "SELECT * FROM BIZ_APP01 where C_APP_ID = '%s'" % (appid)
 
-    con = connect_db('gravity')
+    con = connect_db()
     cur = con.cursor(cursor=pymysql.cursors.DictCursor)
     cur.execute(sql_str)
     rows = cur.fetchall()
@@ -58,10 +47,10 @@ def query_biz_ext_app(appid):
 
 
 def query_3rd_data(table, field, field_value):
-    sql_str = "select * from xrisk.%s where %s = '%s'" % (table, field, field_value)
+    sql_str = "select * from %s where %s = '%s'" % (table, field, field_value)
     print('3rd sql: ', sql_str)
 
-    con = connect_db('gravity')
+    con = connect_db()
     cur = con.cursor(cursor=pymysql.cursors.DictCursor)
     cur.execute(sql_str)
     rows = cur.fetchall()
