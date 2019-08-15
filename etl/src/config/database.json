@@ -1,6 +1,14 @@
 {
-  "host": "dc2.geexfinance.com",
-  "port": 3306,
-  "user": "guye",
-  "password": "56b8M-BF4c1ba"
+  "datacenter": {
+    "host": "dc2.geexfinance.com",
+    "port": 3306,
+    "user": "guye",
+    "password": "56b8M-BF4c1ba"
+  },
+  "local": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "123"
+  }
 }

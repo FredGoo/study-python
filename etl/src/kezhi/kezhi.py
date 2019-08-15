@@ -6,7 +6,7 @@ import os
 
 import pymysql
 
-from src.database import connect_db
+from src.util.database import connect_db
 
 
 class CustomEncoder(json.JSONEncoder):

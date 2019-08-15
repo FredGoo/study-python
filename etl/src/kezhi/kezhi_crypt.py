@@ -6,6 +6,7 @@ import re
 
 
 def encode_mbl_idno_item(root, root_ec, file, hl):
+    print(root)
     infile = open(root + '/' + file, "r", encoding="utf-8").read()
     new_infile = infile
 
@@ -33,8 +34,6 @@ def encode_mbl_idno_item(root, root_ec, file, hl):
             hl.update(bankcard.encode(encoding='utf-8'))
             new_infile = new_infile.replace(bankcard, hl.hexdigest())
 
-    print(new_infile)
-
     # 保存加密后的数据
     outfile = open(root_ec + '/' + file, "w", encoding="utf-8")
     outfile.write(str(new_infile))
@@ -42,7 +41,7 @@ def encode_mbl_idno_item(root, root_ec, file, hl):
 
 
 def encode_mbl_idno():
-    rootdir = os.getcwd()[:-4] + '/out/raw'
+    rootdir = '/home/fred/Documents/2.rmd/2.kezhi/sample20190814/raw'
     hl = hashlib.md5()
 
     for root, dirs, files in os.walk(rootdir):

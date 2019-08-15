@@ -4,13 +4,16 @@ import json
 import pymysql
 
 
-def connect_db():
-    with open('json/env.json', 'r') as f:
-        env = json.load(fp=f)
+def load_config():
+    with open('../config/database.json', 'r') as f:
+        config = json.load(fp=f)
+    return config
 
-    return pymysql.connect(host=env['host'],
-                           port=env['port'],
-                           user=env['user'],
-                           password=env['password'],
-                           database='datacenter',
+
+def connect_db(config, database):
+    return pymysql.connect(host=config['host'],
+                           port=config['port'],
+                           user=config['user'],
+                           password=config['password'],
+                           database=database,
                            charset='utf8')

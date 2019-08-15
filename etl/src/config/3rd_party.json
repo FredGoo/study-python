@@ -5,8 +5,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-190604-257430"
+    "data_id": "ID"
   },
   {
     "name": "tx",
@@ -14,8 +13,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-181204-200610"
+    "data_id": "ID"
   },
   {
     "name": "pa",
@@ -23,8 +21,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-181119-563886"
+    "data_id": "ID"
   },
   {
     "name": "td",
@@ -32,8 +29,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-181204-200610"
+    "data_id": "ID"
   },
   {
     "name": "mx",
@@ -41,8 +37,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-181016-632730"
+    "data_id": "ID"
   },
   {
     "name": "ja",
@@ -50,8 +45,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-181204-200610"
+    "data_id": "ID"
   },
   {
     "name": "tx",
@@ -59,8 +53,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-181204-200610"
+    "data_id": "ID"
   },
   {
     "name": "br",
@@ -68,8 +61,7 @@
     "search_field": "APP_ID",
     "info_field": "C_MBL_TEL",
     "data_field": "RAW_DATA",
-    "data_id": "API_CODE",
-    "test_value": "15960891828"
+    "data_id": "API_CODE"
   },
   {
     "name": "cy",
@@ -77,8 +69,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-190409-385049"
+    "data_id": "ID"
   },
   {
     "name": "xy",
@@ -86,8 +77,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-181127-914634"
+    "data_id": "ID"
   },
   {
     "name": "zq",
@@ -95,8 +85,7 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-190416-774821"
+    "data_id": "ID"
   },
   {
     "name": "fi",
@@ -104,7 +93,6 @@
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",
-    "data_id": "ID",
-    "test_value": "NYB01-190702-756663"
+    "data_id": "ID"
   }
 ]
