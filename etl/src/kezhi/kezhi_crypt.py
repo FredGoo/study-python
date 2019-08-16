@@ -1,8 +1,9 @@
-# encoding:utf-8
-
+# -*- coding: utf-8 -*-
 import hashlib
 import os
 import re
+
+rootdir = '/home/fred/Documents/2.rmd/2.kezhi/sample20190815/raw'
 
 
 def encode_mbl_idno_item(root, root_ec, file, hl):
@@ -41,7 +42,6 @@ def encode_mbl_idno_item(root, root_ec, file, hl):
 
 
 def encode_mbl_idno():
-    rootdir = '/home/fred/Documents/2.rmd/2.kezhi/sample20190814/raw'
     hl = hashlib.md5()
 
     for root, dirs, files in os.walk(rootdir):

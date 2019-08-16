@@ -8,12 +8,15 @@ import pymysql
 
 from src.util.database import connect_db, load_config
 
+# 输出目录
+output_folder = '/home/fred/Documents/2.rmd/2.kezhi/sample20190815'
+# 执行批次号
+batch_no = 5
+
 # datacenter
 datacenter_config = {}
 # 127.0.0.1
 local_config = {}
-# 输出目录
-output_folder = '/home/fred/Documents/2.rmd/2.kezhi/sample20190814'
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -152,10 +155,10 @@ if __name__ == '__main__':
     local_config = db_config['local']
 
     # 获取订单列表
-    app_list = get_app_list(2)
+    app_list = get_app_list(batch_no)
 
     # 获取三方数据
-    # get_3rd_data(app_list)
+    get_3rd_data(app_list)
 
     # 获取订单信息
     get_app_info(app_list)
