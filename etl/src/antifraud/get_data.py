@@ -11,11 +11,11 @@ from src.util.file import save_batch_json, save_json
 db_config = {}
 app_mp_map = {}
 root_path = "/home/fred/Documents/2.rmd/1.antifraud"
-output_path = root_path + "/out/data20190816"
+output_path = root_path + "/out/data20190819"
 
 
 def load_app_csv():
-    tpot_data = pandas.read_csv(root_path + '/医美欺诈用户数据.csv')
+    tpot_data = pandas.read_csv(root_path + '/医美欺诈用户数据100.csv')
     # features = tpot_data.drop('target', axis=1).values
 
     return tpot_data.values
