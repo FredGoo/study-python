@@ -1,35 +1,63 @@
 # -*- coding: utf-8 -*-
+import datetime
+import decimal
 import json
+import os
+
+from src.antifraud.thirdparty import mx
+
+root_path = '/home/fred/Documents/2.rmd/1.antifraud/out/data20190820/raw'
 
 
-# 魔蝎
-def mx(path):
-    with open(path, 'r') as f:
-        data = json.load(fp=f)
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        if isinstance(obj, datetime.datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        if isinstance(obj, datetime.date):
+            return obj.strftime("%Y-%m-%d")
+        return super(CustomEncoder, self).default(obj)
 
-        # 报告有效性检查
-        if not data['success']:
-            return
-        if not data.__contains__('report_data'):
-            return
 
-        report = data['report_data']
-        mx_data = {}
+mx_map = {}
 
-        # behavior_check
-        with open('../out/mx.json', 'r') as f:
-            mxjson = json.load(fp=f)
 
-        field_map['mx']['behavior_check'] = {}
-        for behavior_check in report['behavior_check']:
-            field_map['mx']['behavior_check'][behavior_check['check_point']] = {
-                'key': 'xxx',
-                "deal": 0
-            }
+# 加载魔蝎配置
+def load_mx_map():
+    with open('../config/3rd/mx.json', 'r') as f:
+        return json.load(fp=f)
 
-        return mx_data
+
+def mx_key_map():
+    with open('../config/3rd/mx.json', 'r') as f:
+        mxjson = json.load(fp=f)
+
+        for key in mxjson['application_check']:
+            mxjson['application_check'][key] = 'application_check_' + mxjson['application_check'][key]
+
+        print(mxjson)
+
+
+def loop_dir(path):
+    i = 0
+    j = 0
+
+    for root, dirs, files in os.walk(path):
+        i = i + 1
+        for file in files:
+            if file.startswith('mx'):
+                j = j + 1
+                print('folder', i, 'file', j)
+
+                res = mx.wash(root + '/' + file, mx_map)
+                if res == 0:
+                    return
+                with open(root + '/first_raw_without_array_mx.json', 'w') as f:
+                    json.dump(res, f, cls=CustomEncoder, ensure_ascii=False)
 
 
 if __name__ == '__main__':
-    mx_data = mx('/home/fred/git/study-python/etl/out/raw/NYB01-181204-200610/mx_1.json')
-    print(mx_data)
+    mx_map = load_mx_map()
+
+    loop_dir(root_path)
