@@ -84,16 +84,6 @@ def wash(path, mx_map):
         print('ebusiness_expense', ebusiness_expense)
         return 0
 
-    # collection_contact
-    # todo
-    # collection_contact = report['collection_contact']
-    # if len(collection_contact) > 0:
-    #     print('collection_contact', collection_contact)
-    #     return 0
-
-    # trip_info
-    # todo
-
     # person
     person = report['person']
     for person_key in person.keys():
@@ -114,6 +104,55 @@ def wash(path, mx_map):
         mx_data[application_check_key] = application['result']
 
     return mx_data
+
+
+def wash_trip_info(path):
+    print(path)
+    f = open(path, "r")
+    json_str = json.load(f)
+    f.close()
+    data = json.loads(json_str)
+
+    # 报告有效性检查
+    if not data['success']:
+        return 0
+    if not data.__contains__('report_data'):
+        return 0
+
+    report = data['report_data']
+
+    # trip_info
+    # todo
+
+
+# 联系人信息
+def wash_collection_contact(path):
+    print(path)
+    f = open(path, "r")
+    data = json.load(f)
+    f.close()
+
+    # 报告有效性检查
+    if not data['success']:
+        return 0
+    if not data.__contains__('report_data'):
+        return 0
+
+    report = data['report_data']
+
+    # collection_contact
+    collection_contact = report['collection_contact']
+
+    if len(report['data_source']) > 1:
+        print(report['data_source'])
+        print('data_source > 1')
+
+    return {
+        'data': collection_contact,
+        'idno': report['person']['id_card_num'],
+        'name': report['person']['real_name'],
+        'phone': report['data_source'][0]['account']
+    }
 
 
 def fetch_batch(mbl_list_str, db_config):

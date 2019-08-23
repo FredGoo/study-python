@@ -6,7 +6,7 @@ import os
 
 from src.antifraud.thirdparty import mx
 
-root_path = '/home/fred/Documents/2.rmd/1.antifraud/out/data20190820/raw'
+root_path = '/home/fred/Documents/2.rmd/1.antifraud/out/data20190821'
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -39,7 +39,7 @@ def mx_key_map():
         print(mxjson)
 
 
-def loop_dir(path):
+def norm_wash(path):
     i = 0
     j = 0
 
@@ -57,7 +57,27 @@ def loop_dir(path):
                     json.dump(res, f, cls=CustomEncoder, ensure_ascii=False)
 
 
+# 图信息清洗
+def graph_wash(path):
+    i = 0
+    j = 0
+
+    for root, dirs, files in os.walk(path):
+        i = i + 1
+        for file in files:
+            if file.startswith('mx'):
+                j = j + 1
+                print('folder', i, 'file', j)
+                file_path = root + '/' + file
+
+                res = mx.wash_collection_contact(file_path)
+                if res == 0:
+                    return
+                with open(root_path + '/mx/collection_contact/' + res['idno'] + '.json', 'w') as f:
+                    json.dump(res, f, cls=CustomEncoder, ensure_ascii=False)
+
+
 if __name__ == '__main__':
     mx_map = load_mx_map()
 
-    loop_dir(root_path)
+    graph_wash(root_path + '/raw')
