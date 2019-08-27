@@ -70,10 +70,10 @@ def graph_wash(path):
                 print('folder', i, 'file', j)
                 file_path = root + '/' + file
 
-                res = mx.wash_collection_contact(file_path)
+                res = mx.wash_contact_list(file_path)
                 if res == 0:
                     return
-                with open(root_path + '/mx/collection_contact/' + res['idno'] + '.json', 'w') as f:
+                with open(root_path + '/mx/contact_list/' + res['idno'] + '.json', 'w') as f:
                     json.dump(res, f, cls=CustomEncoder, ensure_ascii=False)
 
 
