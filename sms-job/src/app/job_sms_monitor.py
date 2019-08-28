@@ -60,6 +60,7 @@ def get_orders(start):
                     from BIZ_APP_COMMON common \
                     left join BIZ_APP01 norm on common.C_APP_ID = norm.C_APP_ID \
                     where norm.C_VAR701 = 'geexcapp' \
+                    and common.N_DDG_FLAG = 0 \
                     and common.D_CREATE > '" + start_date + "' \
                     and (common.C_OS_TYPE < 'b' or common.C_OS_TYPE is null or common.C_OS_TYPE = '')\
                     order by common.D_CREATE desc"
