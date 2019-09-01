@@ -110,7 +110,7 @@ if __name__ == '__main__':
     app_definition = load_app_csv()
 
     # 保存订单标签
-    save_app_target(load_app_csv())
+    save_app_target(app_definition)
 
     # 获取订单数据
     get_app_data(app_definition)
