@@ -2,15 +2,13 @@
 import csv
 import json
 import os
+from datetime import datetime
 
-import pymysql
 from py2neo import Graph, NodeMatcher
 
-from src.util.database import load_config, connect_db
+from src.util.phone import oddphone_filter
 
-root_path = '/home/fred/Documents/2.rmd/1.antifraud/out/data20190821'
-community_json_path = '/home/fred/git/study-python/etl/out/graph/taged.json'
-mobile_json_path = '/home/fred/git/study-python/etl/out/graph/mobile2app.json'
+root_path = '/home/fred/Documents/2.rmd/1.antifraud/out/data20190903'
 mobile_res_path = '/home/fred/git/study-python/etl/out/graph/res.json'
 
 
@@ -21,9 +19,9 @@ def delete_all():
 
 def export_data_csv():
     i = 0
-    path = root_path + '/mx/contact_list'
+    path = root_path + '/contacts/contact_list'
     user_list = []
-    mobile_list = set()
+    mobile_dict = {}
     mobile_user_list = []
     mobile_contact_list = []
 
@@ -41,7 +39,13 @@ def export_data_csv():
                 #     "name_cn": json_data['name'],
                 # })
                 # 手机节点
-                mobile_list.add(str(json_data['phone']))
+                if not mobile_dict.__contains__(str(json_data['list'][0]['phone'])):
+                    mobile_dict[str(json_data['list'][0]['phone'])] = {
+                        'mobile:ID': str(json_data['list'][0]['phone']),
+                        'idno': json_data['user']['C_CUST_IDNO'],
+                        'app_id': json_data['user']['C_APP_ID'],
+                        'overdue_days': json_data['user']['OVERDUE_DAYS']
+                    }
                 # 手机归属
                 # mobile_user_list.append({
                 #     ":END_ID": str(json_data['idno']),
@@ -49,35 +53,40 @@ def export_data_csv():
                 #     ':TYPE': 'BELONGS_TO'
                 # })
 
-                for contact in json_data['data']:
-                    # 通讯关系
-                    mobile_list.add(contact['phone_num'])
-                    # mobile_contact_list.append({
-                    #     ":END_ID": str(json_data['phone']),
-                    #     ":START_ID": contact['phone_num'],
-                    #     ':TYPE': 'CONTACTS'
-                    # })
+                for contact_data in json_data['list']:
+                    for contact in contact_data['data']:
+                        if not oddphone_filter(contact['phone_num']):
+                            # 通讯关系
+                            if not mobile_dict.__contains__(contact['phone_num']):
+                                mobile_dict[str(contact['phone_num'])] = {
+                                    'mobile:ID': contact['phone_num']
+                                }
+
+                            mobile_contact_list.append({
+                                ":END_ID": str(json_data['list'][0]['phone']),
+                                ":START_ID": contact['phone_num'],
+                                ':TYPE': 'CONTACTS'
+                            })
 
             # break
 
-    export_path = root_path + '/mx/neo4j/contact_csv'
+    export_path = root_path + '/contacts/neo4j/contact_csv'
     # with open(export_path + '/user.csv', 'w', newline='')as f:
     #     f_csv = csv.DictWriter(f, ['idno:ID', 'name_cn'])
     #     f_csv.writeheader()
     #     f_csv.writerows(user_list)
     with open(export_path + '/mobile.csv', 'w', newline='')as f:
-        f_csv = csv.writer(f)
-        f_csv.writerow(['mobile:ID'])
-        for row in mobile_list:
-            f_csv.writerow([row])
+        f_csv = csv.DictWriter(f, ['mobile:ID', 'app_id', 'idno', 'overdue_days'])
+        f_csv.writeheader()
+        f_csv.writerows(mobile_dict.values())
     # with open(export_path + '/user_mobile_relation.csv', 'w', newline='')as f:
     #     f_csv = csv.DictWriter(f, [':START_ID', ':END_ID', ':TYPE'])
     #     f_csv.writeheader()
     #     f_csv.writerows(mobile_user_list)
-    # with open(export_path + '/mobile_contact_relation.csv', 'w', newline='')as f:
-    #     f_csv = csv.DictWriter(f, [':START_ID', ':END_ID', ':TYPE'])
-    #     f_csv.writeheader()
-    #     f_csv.writerows(mobile_contact_list)
+    with open(export_path + '/mobile_contact_relation.csv', 'w', newline='')as f:
+        f_csv = csv.DictWriter(f, [':START_ID', ':END_ID', ':TYPE'])
+        f_csv.writeheader()
+        f_csv.writerows(mobile_contact_list)
 
 
 def mark_bad_user():
@@ -109,101 +118,66 @@ def community_detection():
     r_list = test_graph.run('''
     CALL algo.louvain.stream('Mobile', 'CONTACTS', {})
     YIELD nodeId, community
-    RETURN algo.asNode(nodeId).mobile AS mobile, community
+    RETURN 
+    algo.asNode(nodeId).mobile AS mobile, 
+    algo.asNode(nodeId).app_id AS app_id,
+    algo.asNode(nodeId).idno AS idno,
+    algo.asNode(nodeId).overdue_days AS overdue_days,
+    community
     ORDER BY community
     ''')
 
     data = {}
     for r in r_list:
         c = r['community']
-        m = r['mobile']
+        m = {
+            'mobile': r['mobile'],
+            'community': r['community']
+        }
+        if r['app_id'] != None:
+            m['app_id'] = r['app_id']
+        if r['idno'] != None:
+            m['idno'] = r['idno']
+        if r['overdue_days'] != None:
+            m['overdue_days'] = r['overdue_days']
         if not data.__contains__(c):
             data[c] = []
-
         data[c].append(m)
 
-    with open(community_json_path, 'w') as f:
+        # break
+
+    with open(root_path + '/contacts/neo4j/taged.json', 'w') as f:
         json.dump(data, f)
 
 
-def save_mobile_to_app():
-    mobile2app = {}
-
-    db_config = load_config()
-    sql_str = "SELECT * from app_id_list where batch_id = 5"
-    con = connect_db(db_config['local'], 'kezhi')
-    cur = con.cursor(cursor=pymysql.cursors.DictCursor)
-    cur.execute(sql_str)
-    rows = cur.fetchall()
-    cur.close()
-    con.close()
-
-    for row in rows:
-        mobile2app[row['custom_mobile']] = {
-            'appid': row['app_id'],
-            'overdue': row['overdue_days']
-        }
-
-    with open(mobile_json_path, 'w') as f:
-        json.dump(mobile2app, f)
-
-
 def analysis_community():
-    with open(mobile_json_path, 'r') as f:
-        mobile2app = json.load(f)
-        print('app in database', len(mobile2app.keys()))
-
-    with open(community_json_path, 'r') as f:
+    with open(root_path + '/contacts/neo4j/taged.json', 'r') as f:
         gcj = json.load(f)
         print('community num', len(gcj.keys()))
 
-    i = 0
     res = {}
-    community = 0
     for value in gcj.values():
-        community_user = 0
-        community_bad_user = 0
+        print(len(value))
+        user = 0
+        bad_user = 0
 
-        for mobile in value:
-            if mobile2app.__contains__(mobile):
-                i = i + 1
-                community_user = community_user + 1
+        for community_value in value:
+            if community_value.__contains__('app_id'):
+                user += 1
 
-                if mobile2app[mobile]['overdue'] > 0:
-                    community_bad_user = community_bad_user + 1
+        print('user', user)
+        print('bad_user', bad_user)
 
-        bad_rate = 0
-        if community_user > 0:
-            bad_rate = community_bad_user / community_user
-        if bad_rate > 0.1:
-            res[community] = {
-                'total_user': community_user,
-                'bad_user': community_bad_user,
-                'mobile_list': value
-            }
-
-            community = community_bad_user + 1
-            print('community user', community_user, 'bad rate', bad_rate)
-
-    with open(mobile_res_path, 'w') as f:
-        json.dump(res, f)
-
-    print('mobile in app num', i)
-
-
-def analysis_res():
-    with open(mobile_res_path, 'r') as f:
-        res = json.load(f)
-
-    test_graph = Graph("http://127.0.0.1:7474", username="neo4j", password="123")
-
-    for community in res.values():
-        if community['total_user'] > 500:
-            print(community['total_user'])
-
-            for mobile in community['mobile_list']:
-                test_graph.run('match (n:Mobile{mobile:"%s"}) set n.community = "0"' % mobile)
+    # with open(mobile_res_path, 'w') as f:
+    #     json.dump(res, f)
 
 
 if __name__ == '__main__':
-    analysis_res()
+    start_time = datetime.now()
+
+    export_data_csv()
+    # community_detection()
+    # analysis_community()
+
+    end_time = datetime.now()
+    print('start', start_time, 'end', end_time, 'take', end_time - start_time)
