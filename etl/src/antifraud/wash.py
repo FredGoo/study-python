@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import csv
 import datetime
 import decimal
 import json
@@ -7,7 +8,7 @@ import os
 from src.antifraud.thirdparty import mx
 from src.util.phone import oddphone_filter
 
-root_path = '/home/fred/Documents/2.rmd/1.antifraud/out/data20190903'
+root_path = '/home/fred/Documents/neo4j/data20190903'
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -62,6 +63,10 @@ def norm_wash(path):
 def graph_wash(path):
     ran_dir_num = 0
 
+    mobile_dict = {}
+    mobile_contact_list = []
+    buser = load_buser()
+
     # 遍历文件夹
     dir_list = os.listdir(path)
     total_app_num = len(dir_list)
@@ -96,11 +101,87 @@ def graph_wash(path):
                 mxinfo = mx.wash_contact_list(mx_file_path)
             else:
                 mxinfo = None
-            print(mxinfo)
+
+            # 生成可导入neo4j的数据
+            user_phone = appinfo['C_MBL_TEL']
+            if not mobile_dict.__contains__(user_phone):
+                mobile_dict[user_phone] = {
+                    'mobile:ID': user_phone,
+                    'idno': appinfo['C_CUST_IDNO'],
+                    'app_id': appinfo['C_APP_ID'],
+                    'overdue_days': appinfo['OVERDUE_DAYS'],
+                    'app_status': appinfo['N_APP_STATUS']
+                }
+            if mxinfo != None:
+                for contact in mxinfo['data']:
+                    if not oddphone_filter(contact['phone_num']):
+                        # 通讯关系
+                        if not mobile_dict.__contains__(contact['phone_num']):
+                            contact_user = {'mobile:ID': contact['phone_num']}
+                            if buser.__contains__(contact['phone_num']):
+                                contact_user['buser'] = 1
+                                contact_user['buser_name'] = buser[contact['phone_num']]
+                            mobile_dict[str(contact['phone_num'])] = contact_user
+                        if contact['call_in_cnt'] > 0:
+                            mobile_contact_list.append({
+                                ":END_ID": user_phone,
+                                ":START_ID": contact['phone_num'],
+                                ':TYPE': 'CONTACTS'
+                            })
+                        if contact['call_out_cnt'] > 0:
+                            mobile_contact_list.append({
+                                ":END_ID": contact['phone_num'],
+                                ":START_ID": user_phone,
+                                ':TYPE': 'CONTACTS'
+                            })
+
+            print('------')
 
         # 测试用语句
-        if ran_dir_num > 9:
-            return
+        # if ran_dir_num > 9:
+        #     break
+
+    export_path = root_path + '/csv'
+    with open(export_path + '/mobile.csv', 'w', newline='')as f:
+        f_csv = csv.DictWriter(f, ['mobile:ID', 'app_id', 'idno', 'overdue_days', 'app_status', 'buser', 'buser_name'])
+        f_csv.writeheader()
+        f_csv.writerows(mobile_dict.values())
+    with open(export_path + '/mobile_contact_relation.csv', 'w', newline='')as f:
+        f_csv = csv.DictWriter(f, [':START_ID', ':END_ID', ':TYPE'])
+        f_csv.writeheader()
+        f_csv.writerows(mobile_contact_list)
+
+
+def load_buser():
+    buser = {}
+
+    with open('/home/fred/Documents/neo4j/BAPP_USER.csv', 'r') as f:
+        f_csv = csv.reader(f)
+        for line in f_csv:
+            buser[line[4]] = line[2]
+
+    return buser
+
+
+def instinct_contact():
+    res = {}
+    export_path = root_path + '/csv'
+
+    i = 0
+    with open(export_path + '/mobile_contact_relation.csv', 'r') as f:
+        fcsv = csv.DictReader(f)
+        for line in fcsv:
+            print(i)
+            i += 1
+
+            if not (res.__contains__(line[':START_ID'] + line[':END_ID']) or res.__contains__(
+                    line[':END_ID'] + line[':START_ID'])):
+                res[line[':START_ID'] + line[':END_ID']] = line
+
+    with open(export_path + '/mobile_contact_relation2.csv', 'w', newline='')as f:
+        f_csv = csv.DictWriter(f, [':START_ID', ':END_ID', ':TYPE'])
+        f_csv.writeheader()
+        f_csv.writerows(res.values())
 
 
 def test_mx_files(path):
@@ -155,4 +236,5 @@ def test_strange_phone_filter():
 
 
 if __name__ == '__main__':
-    graph_wash(root_path + '/raw')
+    # graph_wash(root_path + '/raw')
+    instinct_contact()

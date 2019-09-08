@@ -157,7 +157,7 @@ def wash_collection_contact(path):
 
 # 运营商联系人通话详情
 def wash_contact_list(path):
-    print(path)
+    # print(path)
     f = open(path, "r")
     data = json.load(f)
     f.close()

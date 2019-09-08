@@ -113,44 +113,89 @@ def mark_bad_user():
                 tx.commit()
 
 
-def community_detection():
-    test_graph = Graph("http://127.0.0.1:7474", username="neo4j", password="123")
+def community_detection_louvain():
+    test_graph = Graph("http://127.0.0.1:7474")
     r_list = test_graph.run('''
-    CALL algo.louvain.stream('Mobile', 'CONTACTS', {})
-    YIELD nodeId, community
-    RETURN 
-    algo.asNode(nodeId).mobile AS mobile, 
-    algo.asNode(nodeId).app_id AS app_id,
-    algo.asNode(nodeId).idno AS idno,
-    algo.asNode(nodeId).overdue_days AS overdue_days,
-    algo.asNode(nodeId).app_status AS app_status,
-    community
-    ORDER BY community
+    CALL algo.louvain('Mobile', 'CONTACTS', {write:true, writeProperty:'community', concurrency:8})
+    YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
+    ''')
+    print(r_list)
+
+
+def community_detection_lp():
+    test_graph = Graph("http://127.0.0.1:7474")
+    r_list = test_graph.run('''
+CALL algo.labelPropagation('Mobile', 'CONTACTS',
+  {iterations: 10, writeProperty: 'community', write: true, direction: 'OUTGOING'})
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, write, writeProperty;
+    ''')
+    print(r_list)
+
+
+def pagerank():
+    test_graph = Graph("http://127.0.0.1:7474")
+    r_list = test_graph.run('''
+CALL algo.pageRank('Mobile', 'CONTACTS',
+  {iterations:20, dampingFactor:0.85, write: true,writeProperty:"pagerank"})
+YIELD nodes, iterations, loadMillis, computeMillis, writeMillis, dampingFactor, write, writeProperty
+    ''')
+    print(r_list.to_series())
+
+
+def analysis_community_direct():
+    test_graph = Graph("http://127.0.0.1:7474")
+    r = test_graph.run('''
+    match (n:Mobile)return n.community, count(n.community) as num
+    ''')
+    print(r.to_series())
+
+
+def analysis_pagerank_direct():
+    test_graph = Graph("http://127.0.0.1:7474")
+    r = test_graph.run('''
+    match (n:Mobile) where n.app_id is null return n order by n.pagerank desc limit 1000
     ''')
 
-    data = {}
-    for r in r_list:
-        c = r['community']
-        m = {
-            'mobile': r['mobile'],
-            'community': r['community']
-        }
-        if r['app_id'] != None:
-            m['app_id'] = r['app_id']
-        if r['idno'] != None:
-            m['idno'] = r['idno']
-        if r['overdue_days'] != None:
-            m['overdue_days'] = r['overdue_days']
-        if r['app_status'] != None:
-            m['app_status'] = r['app_status']
-        if not data.__contains__(c):
-            data[c] = []
-        data[c].append(m)
+    csvdata = []
+    for line in r:
+        n = line['n']
+        if len(n['mobile']) == 11:
+            print(n)
+            r1 = analysis_pagerank_direct_one(n['mobile'])
+            r1['mobile'] = n['mobile']
+            if r1.__contains__('buser_name'):
+                r1['buser_name'] = n['buser_name']
+            csvdata.append(r1)
 
-        # break
+    with open('/home/fred/Documents/neo4j/pagerank.csv', 'w')as f:
+        f_csv = csv.DictWriter(f, ['mobile', 'buser_name', 'all', 'overdue', 'reject'])
+        f_csv.writeheader()
+        f_csv.writerows(csvdata)
 
-    with open(root_path + '/contacts/neo4j/taged.json', 'w') as f:
-        json.dump(data, f)
+
+def analysis_pagerank_direct_one(mobile):
+    test_graph = Graph("http://127.0.0.1:7474")
+    cql = '''
+match (n:Mobile)-[:CONTACTS*1..2]-(m:Mobile) where n.mobile ='%s' return n,m
+    '''
+    r = test_graph.run(cql % mobile)
+
+    all = 0
+    bad = 0
+    reject = 0
+    for r_item in r:
+        m = r_item['m']
+        if m.__contains__('app_id'):
+            all += 1
+            if m['app_status'] == '140':
+                reject += 1
+            if (m['overdue_days'] != None and int(m['overdue_days']) > 0):
+                bad += 1
+    return {
+        'all': all,
+        'overdue': bad,
+        'reject': reject
+    }
 
 
 def analysis_community():
@@ -217,10 +262,15 @@ def get_community_by_key():
 if __name__ == '__main__':
     start_time = datetime.now()
 
-    # export_data_csv()
-    # community_detection()
+    # community_detection_lp()
+    # community_detection_louvain()
+    # pagerank()
+
     # analysis_community()
-    get_community_by_key()
+    # analysis_community_direct()
+    analysis_pagerank_direct()
+
+    # get_community_by_key()
 
     end_time = datetime.now()
     print('start', start_time, 'end', end_time, 'take', end_time - start_time)
