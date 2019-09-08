@@ -9,7 +9,6 @@ from py2neo import Graph, NodeMatcher
 from src.util.phone import oddphone_filter
 
 root_path = '/home/fred/Documents/2.rmd/1.antifraud/out/data20190903'
-mobile_res_path = '/home/fred/git/study-python/etl/out/graph/res.json'
 
 
 def delete_all():
@@ -44,7 +43,8 @@ def export_data_csv():
                         'mobile:ID': str(json_data['list'][0]['phone']),
                         'idno': json_data['user']['C_CUST_IDNO'],
                         'app_id': json_data['user']['C_APP_ID'],
-                        'overdue_days': json_data['user']['OVERDUE_DAYS']
+                        'overdue_days': json_data['user']['OVERDUE_DAYS'],
+                        'app_status': json_data['user']['N_APP_STATUS']
                     }
                 # 手机归属
                 # mobile_user_list.append({
@@ -76,7 +76,7 @@ def export_data_csv():
     #     f_csv.writeheader()
     #     f_csv.writerows(user_list)
     with open(export_path + '/mobile.csv', 'w', newline='')as f:
-        f_csv = csv.DictWriter(f, ['mobile:ID', 'app_id', 'idno', 'overdue_days'])
+        f_csv = csv.DictWriter(f, ['mobile:ID', 'app_id', 'idno', 'overdue_days', 'app_status'])
         f_csv.writeheader()
         f_csv.writerows(mobile_dict.values())
     # with open(export_path + '/user_mobile_relation.csv', 'w', newline='')as f:
@@ -123,6 +123,7 @@ def community_detection():
     algo.asNode(nodeId).app_id AS app_id,
     algo.asNode(nodeId).idno AS idno,
     algo.asNode(nodeId).overdue_days AS overdue_days,
+    algo.asNode(nodeId).app_status AS app_status,
     community
     ORDER BY community
     ''')
@@ -140,6 +141,8 @@ def community_detection():
             m['idno'] = r['idno']
         if r['overdue_days'] != None:
             m['overdue_days'] = r['overdue_days']
+        if r['app_status'] != None:
+            m['app_status'] = r['app_status']
         if not data.__contains__(c):
             data[c] = []
         data[c].append(m)
@@ -155,29 +158,69 @@ def analysis_community():
         gcj = json.load(f)
         print('community num', len(gcj.keys()))
 
-    res = {}
-    for value in gcj.values():
-        print(len(value))
+    res = []
+    for key in gcj.keys():
         user = 0
         bad_user = 0
+        reject_user = 0
+        overdue_user = 0
 
-        for community_value in value:
+        for community_value in gcj[key]:
             if community_value.__contains__('app_id'):
                 user += 1
+                if community_value.__contains__('overdue_days'):
+                    if int(community_value['overdue_days']) > 0:
+                        overdue_user += 1
+                        bad_user += 1
+                if community_value.__contains__('app_status'):
+                    if community_value['app_status'] == '140':
+                        reject_user += 1
+                        bad_user += 1
 
-        print('user', user)
-        print('bad_user', bad_user)
+        community_item = {
+            'community_key': key,
+            'total_user_num': user,
+            '140_user': reject_user,
+            'overdue_user': overdue_user
+        }
+        print(community_item)
+        res.append(community_item)
 
-    # with open(mobile_res_path, 'w') as f:
-    #     json.dump(res, f)
+    with open(root_path + '/contacts/neo4j/community.csv', 'w', newline='')as f:
+        f_csv = csv.DictWriter(f, ['community_key', 'total_user_num', '140_user', 'overdue_user'])
+        f_csv.writeheader()
+        f_csv.writerows(res)
+
+
+def get_community_by_key():
+    # key_list = ['90', '166', '137', '156', '186', '203', '184', '333', '93', '120']
+    key_list = ['137', '156', '186', '203', '184', '333', '93', '120']
+
+    with open(root_path + '/contacts/neo4j/taged.json', 'r') as f:
+        gcj = json.load(f)
+
+    test_graph = Graph("http://127.0.0.1:7474", username="neo4j", password="123")
+    set_str = '''
+    match(m:Mobile{mobile:'%s'}) set m.community = '%s'
+    '''
+
+    for key in key_list:
+        print('key', key)
+        print('mobile num', len(gcj[key]))
+        for unit in gcj[key]:
+            if unit.__contains__('app_id'):
+                print(unit['app_id'])
+
+            test_graph.run(set_str % (unit['mobile'], key))
 
 
 if __name__ == '__main__':
     start_time = datetime.now()
 
-    export_data_csv()
+    # export_data_csv()
     # community_detection()
     # analysis_community()
+    get_community_by_key()
 
     end_time = datetime.now()
     print('start', start_time, 'end', end_time, 'take', end_time - start_time)

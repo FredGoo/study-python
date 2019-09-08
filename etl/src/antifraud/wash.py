@@ -60,41 +60,47 @@ def norm_wash(path):
 
 # 图信息清洗
 def graph_wash(path):
-    contact_info_body = {'list': [], 'user': {}}
-    i = 0
-    j = 0
+    ran_dir_num = 0
 
-    # 文件夹
-    for root, dirs, files in os.walk(path):
-        if len(contact_info_body['list']) > 0:
-            with open(root_path + '/contacts/contact_list/' + contact_info_body['user']['C_APP_ID'] + '.json',
-                      'w') as f:
-                json.dump(contact_info_body, f, cls=CustomEncoder, ensure_ascii=False)
-            contact_info_body = {'list': [], 'user': {}}
+    # 遍历文件夹
+    dir_list = os.listdir(path)
+    total_app_num = len(dir_list)
+    print('total app', len(dir_list))
+    for dir in dir_list:
+        dir_path = path + '/' + dir
+        if os.path.isdir(dir_path):
+            ran_dir_num += 1
+            print('appid', dir)
+            print('ran app num', str(ran_dir_num) + '/' + str(total_app_num))
 
-        print('----------------------------')
-        print('files', files)
-        i += 1
+            # 处理每个订单的数据
+            appinfo_file_path = None
+            mx_file_path = None
+            old_mx = 0
+            for file in os.listdir(dir_path):
+                if file.startswith('appinfo'):
+                    appinfo_file_path = dir_path + '/' + file
+                elif file.startswith('mx'):
+                    if mx_file_path == None:
+                        mx_file_path = dir_path + '/' + file
+                        old_mx = file.split('.')[0].split('_')[1]
+                    else:
+                        new_mx = file.split('.')[0].split('_')[1]
+                        if new_mx > old_mx:
+                            mx_file_path = dir_path + '/' + file
 
-        # 每一个文件夹里的文件
-        for file in files:
-            file_path = root + '/' + file
+            # 获取订单和魔蝎数据
+            with open(appinfo_file_path) as f:
+                appinfo = json.load(fp=f)
+            if mx_file_path != None:
+                mxinfo = mx.wash_contact_list(mx_file_path)
+            else:
+                mxinfo = None
+            print(mxinfo)
 
-            if file.startswith('appinfo'):
-                with open(file_path) as f:
-                    user_info = json.load(fp=f)
-                contact_info_body['user'] = user_info
-            if file.startswith('mx'):
-                j += 1
-                print('folder', i, 'file', j)
-
-                res = mx.wash_contact_list(file_path)
-                if res == 0:
-                    return
-                contact_info_body['list'].append(res)
-
-            # if i == 10:
-            #     return
+        # 测试用语句
+        if ran_dir_num > 9:
+            return
 
 
 def test_mx_files(path):
