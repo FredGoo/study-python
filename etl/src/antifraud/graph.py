@@ -163,12 +163,14 @@ def analysis_pagerank_direct():
             print(n)
             r1 = analysis_pagerank_direct_one(n['mobile'])
             r1['mobile'] = n['mobile']
+            if r1.__contains__('buser'):
+                r1['buser'] = n['buser']
             if r1.__contains__('buser_name'):
                 r1['buser_name'] = n['buser_name']
             csvdata.append(r1)
 
     with open('/home/fred/Documents/neo4j/pagerank.csv', 'w')as f:
-        f_csv = csv.DictWriter(f, ['mobile', 'buser_name', 'all', 'overdue', 'reject'])
+        f_csv = csv.DictWriter(f, ['mobile', 'buser', 'buser_name', 'all', 'overdue', 'reject'])
         f_csv.writeheader()
         f_csv.writerows(csvdata)
 
