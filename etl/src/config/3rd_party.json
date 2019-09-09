@@ -16,40 +16,8 @@
     "data_id": "ID"
   },
   {
-    "name": "pa",
-    "table": "T_PA_REQ_DATA",
-    "search_field": "APP_ID",
-    "info_field": "C_APP_ID",
-    "data_field": "RAW_DATA",
-    "data_id": "ID"
-  },
-  {
     "name": "td",
     "table": "T_TD_REQ_DATA",
-    "search_field": "APP_ID",
-    "info_field": "C_APP_ID",
-    "data_field": "RAW_DATA",
-    "data_id": "ID"
-  },
-  {
-    "name": "mx",
-    "table": "T_MX_REQ_DATA",
-    "search_field": "APP_ID",
-    "info_field": "C_APP_ID",
-    "data_field": "RAW_DATA",
-    "data_id": "ID"
-  },
-  {
-    "name": "ja",
-    "table": "T_GEO_REQ_DATA",
-    "search_field": "APP_ID",
-    "info_field": "C_APP_ID",
-    "data_field": "RAW_DATA",
-    "data_id": "ID"
-  },
-  {
-    "name": "tx",
-    "table": "T_TX_REQ_DATA",
     "search_field": "APP_ID",
     "info_field": "C_APP_ID",
     "data_field": "RAW_DATA",

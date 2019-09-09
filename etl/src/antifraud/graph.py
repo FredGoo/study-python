@@ -185,14 +185,18 @@ match (n:Mobile)-[:CONTACTS*1..2]-(m:Mobile) where n.mobile ='%s' return n,m
     all = 0
     bad = 0
     reject = 0
+    app_map = []
     for r_item in r:
         m = r_item['m']
         if m.__contains__('app_id'):
-            all += 1
-            if m['app_status'] == '140':
-                reject += 1
-            if (m['overdue_days'] != None and int(m['overdue_days']) > 0):
-                bad += 1
+            appid = m['app_id']
+            if not app_map.__contains__(appid):
+                app_map.append(appid)
+                all += 1
+                if m['app_status'] == '140':
+                    reject += 1
+                if (m['overdue_days'] != None and int(m['overdue_days']) > 0):
+                    bad += 1
     return {
         'all': all,
         'overdue': bad,
@@ -270,7 +274,8 @@ if __name__ == '__main__':
 
     # analysis_community()
     # analysis_community_direct()
-    analysis_pagerank_direct()
+    # analysis_pagerank_direct()
+    print(analysis_pagerank_direct_one('15955955392'))
 
     # get_community_by_key()
 

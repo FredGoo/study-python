@@ -8,7 +8,7 @@ import os
 from src.antifraud.thirdparty import mx
 from src.util.phone import oddphone_filter
 
-root_path = '/home/fred/Documents/neo4j/data20190903'
+root_path = '/home/fred/Documents/2.rmd/1.antifraud/out/data20190903'
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -155,7 +155,7 @@ def graph_wash(path):
 def load_buser():
     buser = {}
 
-    with open('/home/fred/Documents/neo4j/BAPP_USER.csv', 'r') as f:
+    with open(root_path + '/BAPP_USER.csv', 'r') as f:
         f_csv = csv.reader(f)
         for line in f_csv:
             buser[line[4]] = line[2]
@@ -174,8 +174,7 @@ def instinct_contact():
             print(i)
             i += 1
 
-            if not (res.__contains__(line[':START_ID'] + line[':END_ID']) or res.__contains__(
-                    line[':END_ID'] + line[':START_ID'])):
+            if not res.__contains__(line[':START_ID'] + line[':END_ID']):
                 res[line[':START_ID'] + line[':END_ID']] = line
 
     with open(export_path + '/mobile_contact_relation2.csv', 'w', newline='')as f:

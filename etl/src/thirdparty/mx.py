@@ -198,3 +198,18 @@ def fetch_batch(mbl_list_str, db_config):
     con.close()
 
     return res
+
+
+def fetch_batch_and_store(mbl_str, mbl_app_map, db_config, path):
+    print('get mx', mbl_str)
+    res = fetch_batch(mbl_str, db_config)
+    for line in res:
+        mbl = line['ckey']
+        appid = mbl_app_map[mbl]
+        raw_data = line['cdata']
+        id = line['cid']
+
+        if raw_data != None:
+            file = open(path + '/' + appid + '/mx_' + str(id) + '.json', 'w')
+            file.write(raw_data)
+            file.close()

@@ -6,10 +6,11 @@ import os
 
 import pymysql
 
+from src.thirdparty import ja, mx, pa, tx
 from src.util.database import connect_db, load_config
 
 # 输出目录
-output_folder = '/home/fred/Documents/2.rmd/2.kezhi/sample20190815'
+output_folder = '/home/fred/Documents/2.rmd/2.kezhi/sample20190909'
 # 执行批次号
 batch_no = 5
 
@@ -57,7 +58,6 @@ def get_app_info(app_list):
             for res_item in res:
                 subfolder = res_item['C_APP_ID']
 
-                print('app info: ', res_item)
                 # 写入三方数据
                 path = output_folder + '/raw/' + subfolder
 
@@ -76,7 +76,13 @@ def get_3rd_data(app_list):
     with open('../config/3rd_party.json', 'r') as f:
         datasoucre_dict = json.load(fp=f)
 
-    for app_sub_list in chunks(app_list, 1000):
+    trd_path_raw = output_folder + '/raw'
+    appnum = 0
+    appbatchsize = 1000
+    for app_sub_list in chunks(app_list, appbatchsize):
+        appnum += 1
+        print('3rd app almost num', appnum * appbatchsize)
+
         app_id_list = []
         mbl_list = []
         mbl_app_map = {}
@@ -90,48 +96,55 @@ def get_3rd_data(app_list):
         # 拼接手机号查询条件
         mbl_str = "'" + "','".join(mbl_list) + "'"
 
+        # 查询集奥
+        ja.fetch_batch_and_store(mbl_str, app_id_str, mbl_app_map, datacenter_config, trd_path_raw)
+        # 查询魔蝎
+        mx.fetch_batch_and_store(mbl_str, mbl_app_map, datacenter_config, trd_path_raw)
+        # 查询凭安
+        pa.fetch_batch_and_store(app_id_str, datacenter_config, trd_path_raw)
+        # 查询天行
+        tx.fetch_batch_and_store(app_id_str, datacenter_config, trd_path_raw)
         # 查询第三方数据
-        for dict_item in datasoucre_dict:
-            search_val = ""
-            if dict_item['info_field'] == 'C_APP_ID':
-                search_val = app_id_str
-            if dict_item['info_field'] == 'C_MBL_TEL':
-                search_val = mbl_str
+        old_fetch_3rd_dispatch(datasoucre_dict, app_id_str, mbl_str, mbl_app_map)
 
-            sql_str = "select * from %s where %s in (%s)" % (
-                dict_item['table'], dict_item['search_field'], search_val)
-            print('3rd sql: ', sql_str)
+    # 凭安老表无索引，单独获取数据
+    pa.fetch_batch_and_store_2018(datacenter_config, trd_path_raw)
 
-            con = connect_db(datacenter_config, 'datacenter')
-            cur = con.cursor(cursor=pymysql.cursors.DictCursor)
-            cur.execute(sql_str)
-            res = cur.fetchall()
-            cur.close()
-            con.close()
-            print('3rd res length: ', len(res))
 
-            if (len(res) > 0):
-                for res_item in res:
-                    subfolder = res_item[dict_item['search_field']]
-                    if dict_item['info_field'] == 'C_MBL_TEL':
-                        subfolder = mbl_app_map[subfolder]
+def old_fetch_3rd_dispatch(datasoucre_dict, app_id_str, mbl_str, mbl_app_map):
+    for dict_item in datasoucre_dict:
+        search_val = ""
+        if dict_item['info_field'] == 'C_APP_ID':
+            search_val = app_id_str
+        if dict_item['info_field'] == 'C_MBL_TEL':
+            search_val = mbl_str
 
-                    raw_data = res_item[dict_item['data_field']]
-                    print('3rd res raw data: ', raw_data)
-                    # 写入三方数据
-                    path = output_folder + '/raw/' + subfolder
+        sql_str = "select * from %s where %s in (%s)" % \
+                  (dict_item['table'], dict_item['search_field'], search_val)
 
-                    # 创建文件夹
-                    folder_exists = os.path.exists(path)
-                    if not folder_exists:
-                        os.makedirs(path)
+        con = connect_db(datacenter_config, 'datacenter')
+        cur = con.cursor(cursor=pymysql.cursors.DictCursor)
+        cur.execute(sql_str)
+        res = cur.fetchall()
+        cur.close()
+        con.close()
 
-                    if raw_data != None:
-                        file = open(
-                            path + '/' + dict_item['name'] + '_' + str(res_item[dict_item['data_id']]) + '.json',
-                            'w')
-                        file.write(raw_data)
-                        file.close()
+        if (len(res) > 0):
+            for res_item in res:
+                subfolder = res_item[dict_item['search_field']]
+                if dict_item['info_field'] == 'C_MBL_TEL':
+                    subfolder = mbl_app_map[subfolder]
+
+                raw_data = res_item[dict_item['data_field']]
+                # 写入三方数据
+                path = output_folder + '/raw/' + subfolder
+
+                if raw_data != None:
+                    file = open(
+                        path + '/' + dict_item['name'] + '_' + str(res_item[dict_item['data_id']]) + '.json',
+                        'w')
+                    file.write(raw_data)
+                    file.close()
 
 
 # 获取订单列表
@@ -157,8 +170,8 @@ if __name__ == '__main__':
     # 获取订单列表
     app_list = get_app_list(batch_no)
 
-    # 获取三方数据
-    get_3rd_data(app_list)
-
     # 获取订单信息
     get_app_info(app_list)
+
+    # 获取三方数据
+    get_3rd_data(app_list)
