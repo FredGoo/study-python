@@ -3,18 +3,19 @@ import hashlib
 import os
 import re
 
-rootdir = '/home/fred/Documents/2.rmd/2.kezhi/sample20190815/raw'
+rootdir = '/home/fred/Documents/2.rmd/2.kezhi/sample20190909/raw'
 
 
 def encode_mbl_idno_item(root, root_ec, file, hl):
     print(root)
     infile = open(root + '/' + file, "r", encoding="utf-8").read()
+    # infile = '"report_time": 1543909041000,'
     new_infile = infile
 
     # 手机号加密
     mb_reg = '1[3|4|5|7|8][0-9]{9}'
     mb_match = re.findall(mb_reg, new_infile)
-    if len(mb_match) > 0:
+    if len(mb_match) > 0 and not file.split('td'):
         for mb in mb_match:
             hl.update(mb.encode(encoding='utf-8'))
             new_infile = new_infile.replace(mb, hl.hexdigest())
@@ -43,8 +44,11 @@ def encode_mbl_idno_item(root, root_ec, file, hl):
 
 def encode_mbl_idno():
     hl = hashlib.md5()
+    appnum = 0
 
     for root, dirs, files in os.walk(rootdir):
+        print('app num', appnum)
+
         root_ec = root.replace("raw", "encryption")
 
         if len(files) > 0:
@@ -54,6 +58,8 @@ def encode_mbl_idno():
 
         for file in files:
             encode_mbl_idno_item(root, root_ec, file, hl)
+
+        appnum += 1
 
 
 if __name__ == '__main__':
