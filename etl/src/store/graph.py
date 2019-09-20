@@ -210,7 +210,7 @@ def analysis_community():
 
     community_list = []
     cql = '''
-        match (n:Mobile) where n.app_id <> '' return n.overdue_days as overdue_days, n.community as community, count(n.community) as num
+        match (n:Mobile) where n.app_id <> '' return n.community as community, count(n.community) as num
     '''
     r = test_graph.run(cql)
     n = 1
@@ -225,15 +225,17 @@ def analysis_community():
             r1 = test_graph.run(cql)
             overdue_user = 0
             for r1_item in r1:
-                if r1_item.__contains__('overdue_days') and r1_item['overdue_days'] > 0:
+                if r1_item['n'].__contains__('overdue_days') and int(r1_item['n']['overdue_days']) > 0:
                     overdue_user += 1
 
-            community_list.append({
+            community_res = {
                 'community': r_item['community'],
                 'num': r_item['num'],
                 'overdue_user': overdue_user,
                 'overdue_rate': overdue_user / r_item['num']
-            })
+            }
+            print(community_res)
+            community_list.append(community_res)
 
             # break
 
