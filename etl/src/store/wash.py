@@ -285,7 +285,7 @@ def mobile_csv_wash():
 if __name__ == '__main__':
     # 加载数据库配置
     db_config = load_config()
-    graph_wash(root_path + '/raw')
-    instinct_contact()
-    store_info_wash()
+    # graph_wash(root_path + '/raw')
+    # instinct_contact()
+    # store_info_wash()
     mobile_csv_wash()

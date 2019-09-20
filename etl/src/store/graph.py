@@ -206,42 +206,38 @@ match (n:Mobile)-[:CONTACTS*1..1]-(m:Mobile) where n.mobile ='%s' return n,m
 
 
 def analysis_community():
-    with open(root_path + '/contacts/neo4j/taged.json', 'r') as f:
-        gcj = json.load(f)
-        print('community num', len(gcj.keys()))
+    test_graph = Graph("http://127.0.0.1:7474")
 
-    res = []
-    for key in gcj.keys():
-        user = 0
-        bad_user = 0
-        reject_user = 0
-        overdue_user = 0
+    community_list = []
+    cql = '''
+        match (n:Mobile) where n.app_id <> '' return n.overdue_days as overdue_days, n.community as community, count(n.community) as num
+    '''
+    r = test_graph.run(cql)
+    for r_item in r:
+        if r['num'] > 1:
+            print('community', r_item['community'], 'num', r_item['num'])
 
-        for community_value in gcj[key]:
-            if community_value.__contains__('app_id'):
-                user += 1
-                if community_value.__contains__('overdue_days'):
-                    if int(community_value['overdue_days']) > 0:
-                        overdue_user += 1
-                        bad_user += 1
-                if community_value.__contains__('app_status'):
-                    if community_value['app_status'] == '140':
-                        reject_user += 1
-                        bad_user += 1
+            # 获取逾期率
+            cql = 'match (n:Mobile) where n.community = %s and n.app_id <> "" return n' % r_item['community']
+            r1 = test_graph.run(cql)
+            overdue_user = 0
+            for r1_item in r1:
+                if r1_item.__contains__('overdue_days') and r1_item['overdue_days'] > 0:
+                    overdue_user += 1
 
-        community_item = {
-            'community_key': key,
-            'total_user_num': user,
-            '140_user': reject_user,
-            'overdue_user': overdue_user
-        }
-        print(community_item)
-        res.append(community_item)
+            community_list.append({
+                'community': r_item['community'],
+                'num': r_item['num'],
+                'overdue_user': overdue_user,
+                'overdue_rate': overdue_user / r_item['num']
+            })
 
-    with open(root_path + '/contacts/neo4j/community.csv', 'w', newline='')as f:
-        f_csv = csv.DictWriter(f, ['community_key', 'total_user_num', '140_user', 'overdue_user'])
+            # break
+
+    with open('/home/fred/Documents/2.rmd/tmp/data20190920/community.csv', 'w')as f:
+        f_csv = csv.DictWriter(f, ['community', 'num', 'overdue_rate', 'overdue_user'])
         f_csv.writeheader()
-        f_csv.writerows(res)
+        f_csv.writerows(community_list)
 
 
 def get_community_by_key():
@@ -270,10 +266,10 @@ if __name__ == '__main__':
     start_time = datetime.now()
 
     # community_detection_lp()
-    community_detection_louvain()
+    # community_detection_louvain()
     # pagerank()
 
-    # analysis_community()
+    analysis_community()
     # analysis_community_direct()
     # analysis_pagerank_direct()
     # print(analysis_pagerank_direct_one('13638093295'))
