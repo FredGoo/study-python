@@ -22,7 +22,7 @@ def get_app_data_range_date():
         from BIZ_APP_COMMON b
                  left join T_LOAN t on b.C_APP_ID = t.EXT_ID
         where b.D_CREATE between '2018-07-01' and '2019-01-01'
-          and b.N_APP_STATUS in (140, 160, 162)
+          and b.N_APP_STATUS in (160, 162)
           and b.C_APP_TYPE not in ('GMAIN', 'GUP', 'MAIN')
     '''
     con = connect_db(db_config['datacenter'], 'datacenter')
@@ -42,7 +42,7 @@ def get_app_data_range_date():
         from BIZ_APP_COMMON b
                  left join T_LOAN t on b.C_APP_ID = t.EXT_ID
         where b.D_CREATE between '2018-07-01' and '2019-01-01'
-          and b.N_APP_STATUS in (140, 160, 162)
+          and b.N_APP_STATUS in (160, 162)
           and b.C_APP_TYPE not in ('GMAIN', 'GUP', 'MAIN')
           order by N_APP_ID
           limit %s, %s

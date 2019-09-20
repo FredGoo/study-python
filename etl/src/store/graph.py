@@ -116,7 +116,7 @@ def mark_bad_user():
 def community_detection_louvain():
     test_graph = Graph("http://127.0.0.1:7474")
     r_list = test_graph.run('''
-    CALL algo.louvain('Mobile', 'CONTACTS', {write:true, writeProperty:'community', concurrency:8})
+    CALL algo.louvain('Mobile', 'CALLS', {write:true, writeProperty:'community', concurrency:8})
     YIELD nodes, communityCount, iterations, loadMillis, computeMillis, writeMillis
     ''')
     print(r_list)
@@ -270,13 +270,13 @@ if __name__ == '__main__':
     start_time = datetime.now()
 
     # community_detection_lp()
-    # community_detection_louvain()
+    community_detection_louvain()
     # pagerank()
 
     # analysis_community()
     # analysis_community_direct()
     # analysis_pagerank_direct()
-    print(analysis_pagerank_direct_one('13638093295'))
+    # print(analysis_pagerank_direct_one('13638093295'))
 
     # get_community_by_key()
 

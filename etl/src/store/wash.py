@@ -4,11 +4,12 @@ import datetime
 import decimal
 import json
 import os
+import re
 
 import pymysql
 
 from src.thirdparty import mx
-from src.util.database import load_config, connect_db
+from src.util.database import connect_db, load_config
 from src.util.phone import oddphone_filter
 
 root_path = '/home/fred/Documents/2.rmd/tmp/data20190920'
@@ -246,9 +247,10 @@ def store_info_wash():
             store = {
                 'store:ID': store_code,
                 'name': store_info['C_NAME'],
-                'level': store_info['C_LEVEL'],
-                'overdue_rate': store_overdue_info['num'] / store_all_info['num']
+                'level': store_info['C_LEVEL']
             }
+            if store_all_info['num'] > 0:
+                store['overdue_rate'] = store_overdue_info['num'] / store_all_info['num']
             res.append(store)
             print(store)
 
@@ -260,9 +262,30 @@ def store_info_wash():
         f_csv.writerows(res)
 
 
+def mobile_csv_wash():
+    res = []
+
+    with open(root_path + '/csv/mobile.csv', 'r', newline='')as f:
+        pattern = re.compile(r'[^\u4e00-\u9fa5]')
+
+        f_csv = csv.DictReader(f)
+        for line in f_csv:
+            if line['name'] != '':
+                line['name'] = re.sub(pattern, '', line['name'])
+            line['mobile:ID'] = re.sub("\D", "", line['mobile:ID'])
+
+            res.append(line)
+
+    with open(root_path + '/csv/mobile2.csv', 'w', newline='')as f:
+        f_csv = csv.DictWriter(f, ['mobile:ID', 'app_id', 'idno', 'overdue_days', 'app_status', 'store', 'name'])
+        f_csv.writeheader()
+        f_csv.writerows(res)
+
+
 if __name__ == '__main__':
     # 加载数据库配置
     db_config = load_config()
     graph_wash(root_path + '/raw')
     instinct_contact()
     store_info_wash()
+    mobile_csv_wash()
