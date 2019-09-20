@@ -213,9 +213,12 @@ def analysis_community():
         match (n:Mobile) where n.app_id <> '' return n.overdue_days as overdue_days, n.community as community, count(n.community) as num
     '''
     r = test_graph.run(cql)
+    n = 1
     for r_item in r:
-        if r['num'] > 1:
-            print('community', r_item['community'], 'num', r_item['num'])
+        if r_item['num'] > 8 and r_item['num'] < 30:
+            print(n, 'community', r_item['community'], 'num', r_item['num'])
+            n += 1
+            # continue
 
             # 获取逾期率
             cql = 'match (n:Mobile) where n.community = %s and n.app_id <> "" return n' % r_item['community']
