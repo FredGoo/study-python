@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import hashlib
+import json
 import os
 import re
 
-rootdir = '/home/fred/Documents/2.rmd/2.kezhi/sample20190909/raw'
+rootdir = '/home/fred/Documents/2.rmd/2.kezhi/sample20190926/raw'
 
 
 def encode_mbl_idno_item(root, root_ec, file, hl):
-    print(root)
     infile = open(root + '/' + file, "r", encoding="utf-8").read()
     # infile = '"report_time": 1543909041000,'
     new_infile = infile
@@ -36,6 +36,14 @@ def encode_mbl_idno_item(root, root_ec, file, hl):
             hl.update(bankcard.encode(encoding='utf-8'))
             new_infile = new_infile.replace(bankcard, hl.hexdigest())
 
+    # 加密姓名
+    if file == 'appinfo.json':
+        appinfojson = json.loads(new_infile)
+        name = appinfojson['C_NAME_CN']
+        hl.update(name.encode(encoding='utf-8'))
+        appinfojson['C_NAME_CN'] = hl.hexdigest()
+        new_infile = json.dumps(appinfojson)
+
     # 保存加密后的数据
     outfile = open(root_ec + '/' + file, "w", encoding="utf-8")
     outfile.write(str(new_infile))
@@ -60,6 +68,9 @@ def encode_mbl_idno():
             encode_mbl_idno_item(root, root_ec, file, hl)
 
         appnum += 1
+
+        # if appnum > 10:
+        #     break
 
 
 if __name__ == '__main__':

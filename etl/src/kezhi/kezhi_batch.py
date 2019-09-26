@@ -6,13 +6,11 @@ import os
 
 import pymysql
 
-from src.thirdparty import ja, mx, pa, tx
+from src.thirdparty import ja, pa, tx
 from src.util.database import connect_db, load_config
 
 # 输出目录
-output_folder = '/home/fred/Documents/2.rmd/2.kezhi/sample20190909'
-# 执行批次号
-batch_no = 5
+output_folder = '/home/fred/Documents/2.rmd/2.kezhi/sample20190926'
 
 # datacenter
 datacenter_config = {}
@@ -98,8 +96,6 @@ def get_3rd_data(app_list):
 
         # 查询集奥
         ja.fetch_batch_and_store(mbl_str, app_id_str, mbl_app_map, datacenter_config, trd_path_raw)
-        # 查询魔蝎
-        mx.fetch_batch_and_store(mbl_str, mbl_app_map, datacenter_config, trd_path_raw)
         # 查询凭安
         pa.fetch_batch_and_store(app_id_str, datacenter_config, trd_path_raw)
         # 查询天行
@@ -148,8 +144,8 @@ def old_fetch_3rd_dispatch(datasoucre_dict, app_id_str, mbl_str, mbl_app_map):
 
 
 # 获取订单列表
-def get_app_list(batch_id):
-    sql = "select * from kezhi.app_id_list where batch_id = %s and deal_status = 0" % batch_id
+def get_app_list():
+    sql = "select * from kezhi.app_id_list where deal_status = 0"
 
     con = connect_db(local_config, 'kezhi')
     cur = con.cursor(cursor=pymysql.cursors.DictCursor)
@@ -168,7 +164,7 @@ if __name__ == '__main__':
     local_config = db_config['local']
 
     # 获取订单列表
-    app_list = get_app_list(batch_no)
+    app_list = get_app_list()
 
     # 获取订单信息
     get_app_info(app_list)
