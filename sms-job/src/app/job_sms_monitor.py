@@ -53,17 +53,18 @@ def connect_oracle_db():
 
 # 获取一小时内的安卓订单
 def get_orders(start):
-    delta = timedelta(hours=-1)
-    pre_date = start + delta
-    start_date = datetime.strftime(pre_date, '%Y-%m-%d %H:%M:%S')
+    start_date = datetime.strftime(start + timedelta(hours=-2), '%Y-%m-%d %H:%M:%S')
+    end_date = datetime.strftime(start + timedelta(hours=-1), '%Y-%m-%d %H:%M:%S')
     sql = "select common.C_APP_ID, norm.C_VAR701, common.C_OS_TYPE, common.D_CREATE \
                     from BIZ_APP_COMMON common \
                     left join BIZ_APP01 norm on common.C_APP_ID = norm.C_APP_ID \
                     where norm.C_VAR701 = 'geexcapp' \
                     and common.N_DDG_FLAG = 0 \
                     and common.D_CREATE > '" + start_date + "' \
+                    and common.D_CREATE < '" + end_date + "' \
                     and (common.C_OS_TYPE < 'b' or common.C_OS_TYPE is null or common.C_OS_TYPE = '')\
                     order by common.D_CREATE desc"
+    print(sql)
 
     con = connect_mysql_db('datacenter')
     cur = con.cursor(cursor=pymysql.cursors.DictCursor)
@@ -95,6 +96,7 @@ def get_order_sms(app_id_list):
                     from T_CUSTOM_SMS_INFO \
                     where APP_ID in (" + app_ids_str + ") \
                     group by APP_ID"
+    print(sql)
 
     con = connect_mysql_db('datacenter')
     cur = con.cursor(cursor=pymysql.cursors.DictCursor)
