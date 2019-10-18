@@ -88,7 +88,7 @@ def get_app_prd(samplenum, rate):
     tmppath = '/home/fred/git/study-python/etl/out/store/totalapp.json'
     if not os.path.exists(tmppath):
         count_app_sql = '''
-            select ac.C_APP_ID, ac.C_ORG04, tl.OVERDUE_DAYS
+            select ac.C_APP_ID, ac.C_ORG04, tl.STORE_NAME, tl.OVERDUE_DAYS
             from BIZ_APP_COMMON ac
                      left join T_LOAN tl on ac.C_APP_ID = tl.EXT_ID
             where D_CREATE between '2017-01-01' and '2019-01-01'
@@ -112,7 +112,7 @@ def get_app_prd(samplenum, rate):
         return random.sample(appjson, samplenum)
 
 
-def fetch_app(storelist, test):
+def fetch_app(storelist, test, absnum, ratenum):
     # 欺诈门店
     fraudstorelist = {}
     for store in storelist:
@@ -121,30 +121,36 @@ def fetch_app(storelist, test):
     if test:
         appsample = get_app_test_data(1)
     else:
-        appsample = get_app_prd(300, 0.05)
+        appsample = get_app_prd(absnum, ratenum)
     global csvsize
     csvsize = len(appsample)
 
     rulemap = {}
+    rulemapdetail = {}
     processtime = 0
     i = 1
     for appitem in appsample:
         print('订单', i, appitem['C_APP_ID'])
         i += 1
 
-        # 查询订单信息
-        appid = appitem['C_APP_ID']
-        res = es.get(index="appinfo_prd", doc_type='_doc', id=appid)
-
-        # 计算订单命中情况
-        url = 'http://127.0.0.1:8080/geex-dolphin-provider/calculate/group/1/temporary'
-        d = {'map': json.dumps(res['_source'])}
-        r = requests.post(url, data=d)
-        resjson = json.loads(r.text)
+        resjson = post_app_group(appitem['C_APP_ID'])
         processtime += resjson['result']['processTime']
 
         # 分析命中规则
         for rule in resjson['result']['ruleMap'].values():
+            # 规则详情报表
+            if not rulemapdetail.__contains__(rule['key']):
+                rulemapdetail[rule['key']] = []
+            rulemapdetail[rule['key']].append({
+                'appId': appitem['C_APP_ID'],
+                'store': appitem['STORE_NAME'],
+                'storeLevel': 'Y' if fraudstorelist.__contains__(appitem['C_ORG04']) else 'N',
+                'overdueDays': appitem['OVERDUE_DAYS'],
+                'hitNum': rule['triggerNum'],
+                'matchedApplicationModelList': rule['matchedApplicationModelList']
+            })
+
+            # 统计数据
             rulesanalysis = {
                 'key': rule['key'],
                 'hit': 0,
@@ -164,27 +170,68 @@ def fetch_app(storelist, test):
 
             rulemap[rule['key']] = rulesanalysis
 
-    return rulemap, processtime / 1000
+    return rulemap, rulemapdetail, processtime / 1000
 
 
-if __name__ == '__main__':
+def post_app_group(appid):
+    # 查询订单信息
+    res = es.get(index="appinfo_prd", doc_type='_doc', id=appid)
+
+    # 计算订单命中情况
+    url = 'http://127.0.0.1:8080/geex-dolphin-provider/calculate/group/1/temporary'
+    d = {'map': json.dumps(res['_source'])}
+    r = requests.post(url, data=d)
+    return json.loads(r.text)
+
+
+def test_app_single(appid):
     start_time = datetime.now()
 
-    # 加载数据库配置
-    db_config = load_config()
-
-    storelist = fetch_store_by_level(['9Z', '9F'])
-    rulemap, processtime = fetch_app(storelist, 0)
-    with open('/home/fred/git/study-python/etl/out/store/rules_app' + str(csvsize) + '.csv', 'w', newline='')as f:
-        f_csv = csv.DictWriter(f, ['key', 'hit', 'overdue90_hit', 'fraud_store_hit', 'fraud_store_overdue90_hit'])
-        f_csv.writeheader()
-        f_csv.writerows(rulemap.values())
+    res = post_app_group(appid)
+    print(res)
 
     end_time = datetime.now()
     print('start', start_time, 'take', end_time - start_time)
+
+
+def test_app_batch(test, fix, rate):
+    start_time = datetime.now()
+
+    storelist = fetch_store_by_level(['9Z', '9F'])
+    rulemap, rulemapdetail, processtime = fetch_app(storelist, test, fix, rate)
+
+    end_time = datetime.now()
+    print('start', start_time, 'take', end_time - start_time)
+
+    # 落地
+    path = '/home/fred/git/study-python/etl/out/store/' + str(csvsize) + '/'
+    if not os.path.exists(path):
+        os.mkdir(path)
+    with open(path + 'rules_app.csv', 'w', newline='')as f:
+        f_csv = csv.DictWriter(f, ['key', 'hit', 'overdue90_hit', 'fraud_store_hit', 'fraud_store_overdue90_hit'])
+        f_csv.writeheader()
+        f_csv.writerows(rulemap.values())
+    for rulekey in rulemapdetail:
+        rulepath = path + rulekey + '/'
+        if not os.path.exists(rulepath):
+            os.mkdir(rulepath)
+        with open(rulepath + rulekey + '.csv', 'w', newline='') as f:
+            f_csv = csv.DictWriter(f,
+                                   ['appId', 'store', 'storeLevel', 'overdueDays', 'hitNum',
+                                    'matchedApplicationModelList'])
+            f_csv.writeheader()
+            f_csv.writerows(rulemapdetail[rulekey])
 
     dolphintps = csvsize / processtime
     print('dolphin tps', round(dolphintps, 1), '还差目标(60+)' + str(round(60 / dolphintps, 1)) + '倍')
 
     tps = csvsize / (end_time - start_time).total_seconds()
     print('test unit tps', round(tps, 1), '还差目标(60+)' + str(round(60 / tps, 1)) + '倍')
+
+
+if __name__ == '__main__':
+    # 加载数据库配置
+    db_config = load_config()
+
+    # test_app_single('NYB01-180325-816452')
+    test_app_batch(0, 3000, 0.05)
