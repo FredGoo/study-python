@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
+import csv
 import json
+import smtplib
 import xml.etree.ElementTree as ET
+from email.header import Header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import parseaddr, formataddr
 
 import pymysql
 import requests
 
 es_host = 'http://192.168.100.100:9200'
-es_url = 'http://192.168.100.100:9200/logstash-2019.11.04/_search'
+es_url = 'http://192.168.100.100:9200/logstash-2019.11.10/_search'
 headers = {'Content-Type': 'application/json'}
 auth = ('itguest', 'Geex2016')
 smsmap = {
@@ -249,14 +255,60 @@ def load_huaxin_sms_vendoer_map():
         huaxin_map[row['C_TEMPLATE_ID']] = row
 
 
+def _format_addr(s):
+    name, addr = parseaddr(s)
+    return formataddr((Header(name, 'utf-8').encode(), addr))
+
+
 def sendemail(data):
+    csv_file = open('sms.csv', 'w')
+    csvwriter = csv.DictWriter(csv_file, ['渠道', '类型', '成功', '失败'])
+    csvwriter.writeheader()
+
     for key in data.keys():
-        print(smsmap[key])
+        csvrow = {
+            '渠道': '华信',
+            '类型': smsmap[key]
+        }
         for keykey in data[key]:
-            print(keykey, ': ', data[key][keykey])
+            if keykey == '10':
+                csvrow['成功'] = data[key][keykey]
+            else:
+                csvrow['失败'] = data[key][keykey]
+
+        csvwriter.writerow(csvrow)
+
+    csv_file.close()
+
+    from_addr = 'noreply@geexfinance.com'
+    pwd = 'Geexfcs1234'
+    smtp_server = 'mail.geexfinance.com'
+    to_addr = 'guye@geexfinance.com'
+
+    msg = MIMEMultipart()
+    msg['From'] = _format_addr('脚本 <%s>' % from_addr)
+    msg['To'] = _format_addr('xx <%s>' % to_addr)
+    msg['Subject'] = Header('短信统计报告', 'utf-8').encode()
+
+    # 邮件正文是MIMEText:
+    msg.attach(MIMEText('fyi', 'plain', 'utf-8'))
+
+    # 添加附件就是加上一个MIMEBase，从本地读取一个图片:
+    att1 = MIMEText(open('sms.csv', 'rb').read(), 'base64', 'utf-8')
+    att1["Content-Type"] = 'application/octet-stream'
+    att1["Content-Disposition"] = 'attachment; filename="{0}"'.format('sms.csv')
+    msg.attach(att1)
+
+    server = smtplib.SMTP(smtp_server, 587)
+    server.starttls()
+    server.login(from_addr, pwd)
+    server.sendmail(from_addr,
+                    ['wujiadi@geexfinance.com', 'wangjilu@geexfinance.com', 'jixinyang@geexfinance.com', to_addr],
+                    msg.as_string())
+    server.quit()
 
 
 if __name__ == '__main__':
-    # load_huaxin_sms_vendoer_map()
-    # hxres = query_huaxin_es()
-    sendemail({6: {'10': 5}, 3: {'10': 2}, 7: {'10': 37}, 2: {'10': 36}, 5: {'10': 7}, 4: {'10': 353}})
+    load_huaxin_sms_vendoer_map()
+    hxres = query_huaxin_es()
+    sendemail(hxres)
