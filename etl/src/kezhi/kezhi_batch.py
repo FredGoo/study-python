@@ -167,7 +167,7 @@ if __name__ == '__main__':
     app_list = get_app_list()
 
     # 获取订单信息
-    get_app_info(app_list)
+    # get_app_info(app_list)
 
     # 获取三方数据
     get_3rd_data(app_list)
