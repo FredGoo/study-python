@@ -40,15 +40,15 @@ def connect_mysql_db(database):
 
 def query_sms_result(start, end):
     res = {}
-    header = {'渠道': None,
-              '类型': None,
-              '总数': None,
-              '送达': None,
-              '其他': None,
-              '未知': None}
+    header = ['渠道',
+              '类型',
+              '总数',
+              '送达',
+              '其他',
+              '未知']
 
     sql = '''
-    select * from GEEX_SMS_RECORD r left join GEEX_SMS_REPORT p on r.TASK_ID = p.SEQ_ID where r.D_CREATE between '%s' and '%s'
+    select * from GEEX_SMS_RECORD r left join GEEX_SMS_REPORT p on r.TASK_ID = p.SEQ_ID where r.D_CREATE between '%s' and '%s' limit 1
     ''' % (start, end)
 
     con = connect_mysql_db('datacenter')
@@ -111,7 +111,7 @@ def query_sms_result(start, end):
 
             # 文件头
             if not header.__contains__(smsstate):
-                header[smsstate] = None
+                header.append(smsstate)
 
     return res, header
 
@@ -138,7 +138,7 @@ def _format_addr(s):
 
 def sendemail(header, data):
     csv_file = codecs.open('sms.csv', 'w', 'gbk')
-    csvwriter = csv.DictWriter(csv_file, header.keys())
+    csvwriter = csv.DictWriter(csv_file, header)
     csvwriter.writeheader()
     csvwriter.writerows(data.values())
     csv_file.close()
@@ -169,7 +169,8 @@ def sendemail(header, data):
     server.starttls()
     server.login(from_addr, pwd)
     server.sendmail(from_addr,
-                    ['wujiadi@geexfinance.com', 'wangjilu@geexfinance.com', 'jixinyang@geexfinance.com', to_addr],
+                    [to_addr],
+                    # ['wujiadi@geexfinance.com', 'wangjilu@geexfinance.com', 'jixinyang@geexfinance.com', to_addr],
                     msg.as_string())
     server.quit()
 
