@@ -5,7 +5,7 @@ chardet==3.0.4
 cryptography==2.3
 distro==1.4.0
 genpac==2.0.1
-httplib2==0.9.2
+httplib2==0.18.0
 idna==2.6
 jeepney==0.4
 jieba==0.39
